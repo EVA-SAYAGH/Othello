@@ -1,6 +1,10 @@
+
+
 import random
 
 # Object used to create new boards
+
+
 class Board:
     def __init__(self, size):
         self.size = size
@@ -72,21 +76,34 @@ class Board:
     # Or returns which pawns will change color if true
     # The returned list will contain [numbers_of_pawns_to_change, [direction_x, direction_y]]
     def is_legal_move(self, x_pos, y_pos, color):
+
         # North / Nort-East / East / South-East / South / South-West / West / North-West
         directions = [
-            [0, -1], [1, -1], [1, 0], [1, 1],
-            [0, 1], [-1, 1], [-1, 0], [-1, -1]
+            [0, -1],
+            [1, -1],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [-1, 1],
+            [-1, 0],
+            [-1, -1],
         ]
 
         # Opposite of the color of the placed pawn
-        awaited_color = "⚪" if color == "⚫" else "⚫"
+        if color == "⚪":
+            awaited_color = "⚫"
+        else:
+            awaited_color = "⚪"
 
         current_x_pos = x_pos
         current_y_pos = y_pos
         is_legal = False
+        # [number_of_tile_to_flip, direction]
+        # Si on a un pion noir placé en 2,3, on veut:
+        # [[1, [1, 0]]
         tiles_to_flip = []
 
-        if not self.is_tile_empty(current_x_pos, current_y_pos) or not self.is_on_board(current_x_pos, current_y_pos):
+        if (not self.is_tile_empty(current_x_pos, current_y_pos) or not self.is_on_board(current_x_pos, current_y_pos)):
             return False
 
         # Check for every direction
@@ -125,6 +142,12 @@ class Board:
     # The array should be obtained with the "is_legal_move" function
     # Doesn't return anything, but will change the color of the tiles selected by "tiles_to_flip"
     def flip_tiles(self, x_pos, y_pos, tiles_to_flip, color):
+        # x_pos and y_pos = new pawn position
+        # tiles_to_flip = list containing the number of pawn to flip and a direction
+        # ex: [
+        # [1, [1, 0]],
+        # ] means we're changing 1 pawn to the right
+        # color = the new color of the pawns to flip
         for current_dir in tiles_to_flip:
             current_x_pos = x_pos + current_dir[1][0]
             current_y_pos = y_pos + current_dir[1][1]
@@ -136,6 +159,8 @@ class Board:
 
 # Used to create each tile of your board
 # Contains a position (x, y), a type to check if it's a boder tile or not, and a content to check if there is a pawn inside the tile
+
+
 class Tile:
     #   Type is used to check if its an "🟩" empty tile or a "X" border tile
     #   Content is used to check if a pawn is placed o (Empty), B (Black), W (White)
@@ -147,6 +172,8 @@ class Tile:
 
 # Used to create new ruleset
 # Contains the score, the active player, the game_over check and functions allowing to interact with the game
+
+
 class Game:
     def __init__(self):
         self.score_black = 2
@@ -154,6 +181,7 @@ class Game:
         self.active_player = "⚫"
         self.is_game_over = False
         self.winner = "Noone"
+        self.turn = 0
 
     # Place a pawn on the board (checks if the move is legal before placing it)
     # It takes a position (x, y), a Board object instance and a color
@@ -188,6 +216,8 @@ class Game:
         else:
             self.active_player = "⚫"
             print("C'est au tour du joueur noir")
+            
+        self.turn += 1
 
     # Update the players score after a successful move
     def update_score(self, board_instance):
@@ -205,12 +235,25 @@ class Game:
     # Check for a valid move, and end the game if there is none for the current player
     def check_for_valid_moves(self, board_instance):
         is_game_over = True
+        first_player_can_play = False
+
+        # Check if the current player can play
         for tile_index in board_instance.board:
             move_to_check = board_instance.is_legal_move(
                 tile_index.x_pos, tile_index.y_pos, self.active_player)
             if move_to_check != False:
+                first_player_can_play = True
                 is_game_over = False
 
+        # If not, check for the other player and skip the first player's turn
+        if not first_player_can_play:
+            self.change_active_player()
+            for tile_index in board_instance.board:
+                move_to_check = board_instance.is_legal_move(tile_index.x_pos, tile_index.y_pos, self.active_player)
+                if move_to_check != False:
+                  is_game_over = False  
+
+        # If neither can play, end the game
         if is_game_over:
             self.check_for_winner()
             self.is_game_over = True
@@ -228,6 +271,7 @@ class Game:
             self.winner = "⚪"
         else:
             print("Égalité !")
+
 
 class Bot:
     def __init__(self):
@@ -252,7 +296,6 @@ class Bot:
                 if move_to_check:
                     valid_moves.append((tile_index.x_pos, tile_index.y_pos))
         return valid_moves
-
 # Create a new board & a new game instances
 othello_board = Board(8)
 othello_game = Game()
@@ -267,6 +310,7 @@ othello_board.draw_board("Content")
 myBot = Bot()
 otherBot = Bot()
 
+
 # Loop until the game is over
 while not othello_game.is_game_over:
     # First player / bot logic goes here
@@ -275,5 +319,3 @@ while not othello_game.is_game_over:
     # Second player / bot logic goes here
     else:
         otherBot.make_move(othello_board, othello_game)
-
-
